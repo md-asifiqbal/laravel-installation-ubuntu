@@ -1,0 +1,93 @@
+## Organized Steps to Deploy a Laravel App on EC2 Instance Ubuntu 22.04 Nginx Server
+
+#1 - Create An EC2 Instance on AWS console
+#2 - Install Nginx Server
+#3 - Install PHP with required packages
+#4 - Install MySQL Database
+#5 - Install PHPMyAdmin on configure to Nginx server
+#6 - Deploy Laravel app using Git or SFTP.
+
+1. After AWS EC2 Instance Created -
+2. Connect with putty with ssh key -
+
+3. Install Nginx Server
+   sudo apt update
+   sudo apt install nginx
+   systemctl status nginx (to check status)
+   sudo systemctl restart nginx
+   sudo nginx -t
+  
+4. Install php with packages
+   sudo apt update
+   sudo apt install --no-install-recommends php8.1
+   sudo apt-get install y php8.1-cli php8.1-common php8.1-mysql php8.1-zip php8.1-gd php8.1  mbstring php8.1-curl php8.1-xml php8.1-bcmath php8.1-fpm
+   
+   # Install Composer (Php package manager)
+    curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
+ 
+ HASH=`curl -sS https://composer.github.io/installer.sig`
+ echo $HASH
+ 
+ php -r "if (hash_file('SHA384', '/tmp/composer-setup.php') === '$HASH') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+ 
+ sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+ composer
+ 
+5. Install MySQL Database
+    sudo apt update
+    sudo apt install mysql-server
+    sudo mysql
+ 
+    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'your password';
+ 
+6. Install phpmyadmin and configure with nginx server
+   sudo apt update
+   sudo apt install phpmyadmin
+
+   sudo ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin
+
+ - Check Permissions:
+ sudo chown -R www-data:www-data /var/www/html/phpmyadmin
+ sudo chmod -R 755 /var/www/html/phpmyadmin
+ sudo chown -R www-data:www-data /var/www/html
+
+    location /phpmyadmin {
+    root /var/www/html;
+    index index.php index.html index.htm;
+
+    location ~ ^/phpmyadmin/(.+\.php)$ {
+   try_files $uri =404;
+   root /var/www/html;
+   fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+   fastcgi_index index.php;
+   fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+   include /etc/nginx/fastcgi_params;
+  }
+
+  location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
+   root /var/www/html;
+  }
+ }
+ 
+ sudo systemctl restart nginx
+        sudo systemctl restart php8.1-fpm
+
+7. Now Deploy Laravel App on server 
+   
+   1. Create a folder in var/www/html 
+   2. Put your project code on that folder using (Git or SFTP)
+   3. Create a Symbolic link on etc/nginx/sites-available/ folder
+
+## To Unzip zip file 
+sudo apt install zip unzip
+unzip filename.zip
+
+## Laravel Permission Command
+sudo chmod 777 -R /var/www/html
+
+sudo chown -R www-data storage
+sudo chown -R www-data storage/framework
+sudo chmod g+w -R storage
+sudo chmod g+w -R storage/framework
+sudo chmod g+w -R storage/framework/sessions/
+sudo chmod g+w -R storage/logs/
